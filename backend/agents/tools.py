@@ -68,16 +68,62 @@ def get_weather(city: str, api_key: str) -> Dict[str, Any]:
         return {"error": str(e), "city": city}
 
 
-def web_search(query: str, max_results: int = 5) -> List[str]:
-    """DuckDuckGo search — free, no API key required."""
-    try:
-        from duckduckgo_search import DDGS
-        results = []
+def web_search(query: str, max_results: int = 5) -> List[Dict[str, str]]:
+    """DuckDuckGo search focused on IslamQA references."""
+
+    def _normalize(items) -> List[Dict[str, str]]:
+        out: List[Dict[str, str]] = []
+        for r in items:
+            title = str(r.get("title") or "Untitled").strip()
+            snippet = str(r.get("body") or r.get("snippet") or "").strip()
+            url = str(r.get("href") or r.get("url") or "").strip()
+            out.append({"title": title, "snippet": snippet, "url": url})
+        return out
+
+    def _search_ddg(ddg_query: str, limit: int):
+        try:
+            from ddgs import DDGS  # preferred package name
+        except Exception:
+            from duckduckgo_search import DDGS  # backward compatibility
+
         with DDGS() as ddgs:
-            for r in ddgs.text(query, max_results=max_results):
-                results.append(
-                    f"**{r['title']}**\n{r['body']}\n_Source: {r['href']}_"
-                )
-        return results or ["No web results found"]
+            return list(ddgs.text(ddg_query, max_results=limit))
+
+    try:
+        # Prioritize IslamQA references as requested.
+        primary_query = f"site:islamqa.info {query}"
+        primary = _normalize(_search_ddg(primary_query, max_results))
+        islamqa = [r for r in primary if "islamqa.info" in r.get("url", "")]
+
+        if len(islamqa) < max_results:
+            backup_query = f"islamqa {query}"
+            backup = _normalize(_search_ddg(backup_query, max_results * 2))
+            for r in backup:
+                if "islamqa.info" in r.get("url", ""):
+                    islamqa.append(r)
+                if len(islamqa) >= max_results:
+                    break
+
+        deduped: List[Dict[str, str]] = []
+        seen = set()
+        for r in islamqa:
+            key = r.get("url", "")
+            if not key or key in seen:
+                continue
+            seen.add(key)
+            deduped.append(r)
+
+        if deduped:
+            return deduped[:max_results]
+
+        return [{
+            "title": "No IslamQA references found",
+            "snippet": "DuckDuckGo returned no matching islamqa.info pages for this topic.",
+            "url": "",
+        }]
     except Exception as e:
-        return [f"Web search unavailable: {e}"]
+        return [{
+            "title": "Web search unavailable",
+            "snippet": str(e),
+            "url": "",
+        }]

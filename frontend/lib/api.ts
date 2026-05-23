@@ -12,12 +12,18 @@ export interface QuranRef {
   reference: string;
 }
 
+export interface WebReference {
+  title: string;
+  snippet: string;
+  url: string;
+}
+
 export interface ResearchResult {
   report: string;
   quran_references: QuranRef[];
   prayer_times: Record<string, string>;
   weather_data: Record<string, unknown>;
-  web_results: string[];
+  web_results: WebReference[];
   steps: string[];
 }
 
@@ -38,58 +44,72 @@ export async function streamResearch(
   onError: OnError,
   signal?: AbortSignal
 ): Promise<void> {
-  const backendUrl =
-    process.env.NEXT_PUBLIC_BACKEND_URL || "";
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "";
+  let completed = false;
 
-  const res = await fetch(`${backendUrl}/api/research`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(req),
-    signal,
-  });
+  try {
+    const res = await fetch(`${backendUrl}/api/research`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(req),
+      signal,
+    });
 
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({ detail: res.statusText }));
-    onError(body.detail ?? "Request failed");
-    return;
-  }
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({ detail: res.statusText }));
+      onError(body.detail ?? "Request failed");
+      return;
+    }
 
-  const reader = res.body?.getReader();
-  if (!reader) { onError("No response body"); return; }
+    const reader = res.body?.getReader();
+    if (!reader) {
+      onError("No response body");
+      return;
+    }
 
-  const dec = new TextDecoder();
-  let buf = "";
+    const dec = new TextDecoder();
+    let buf = "";
 
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buf += dec.decode(value, { stream: true });
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
 
-    const parts = buf.split("\n\n");
-    buf = parts.pop() ?? "";
+      const parts = buf.split("\n\n");
+      buf = parts.pop() ?? "";
 
-    for (const block of parts) {
-      const lines = block.split("\n");
-      let event = "";
-      let data = "";
-      for (const line of lines) {
-        if (line.startsWith("event: ")) event = line.slice(7).trim();
-        if (line.startsWith("data: ")) data = line.slice(6).trim();
-      }
-      if (!data) continue;
-
-      try {
-        const parsed = JSON.parse(data);
-        if (event === "step" || (event === "status" && parsed.step)) {
-          onStep({ step: parsed.step, agent: parsed.agent ?? "" });
-        } else if (event === "complete") {
-          onComplete(parsed as ResearchResult);
-        } else if (event === "error") {
-          onError(parsed.message ?? "Unknown error");
+      for (const block of parts) {
+        const lines = block.split("\n");
+        let event = "";
+        let data = "";
+        for (const line of lines) {
+          if (line.startsWith("event: ")) event = line.slice(7).trim();
+          if (line.startsWith("data: ")) data = line.slice(6).trim();
         }
-      } catch {
-        // ignore malformed chunk
+        if (!data) continue;
+
+        try {
+          const parsed = JSON.parse(data);
+          if (event === "step" || (event === "status" && parsed.step)) {
+            onStep({ step: parsed.step, agent: parsed.agent ?? "" });
+          } else if (event === "complete") {
+            completed = true;
+            onComplete(parsed as ResearchResult);
+          } else if (event === "error") {
+            onError(parsed.message ?? "Unknown error");
+          }
+        } catch {
+          // ignore malformed chunk
+        }
       }
     }
+
+    if (!completed && !signal?.aborted) {
+      onError("Research stream ended before completion. Please try again.");
+    }
+  } catch (err) {
+    if (signal?.aborted) return;
+    const message = err instanceof Error ? err.message : "Network error while streaming research";
+    onError(message);
   }
 }

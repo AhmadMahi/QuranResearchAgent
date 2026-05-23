@@ -45,20 +45,26 @@ export default function Home() {
     const ctrl = new AbortController();
     abortRef.current = ctrl;
 
-    await streamResearch(
-      { topic: topic.trim(), city, country },
-      (s) => setSteps((prev) => [...prev, s]),
-      (r) => {
-        setResult(r);
-        setLoading(false);
-        setTimeout(() => resultRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
-      },
-      (msg) => {
-        setError(msg);
-        setLoading(false);
-      },
-      ctrl.signal,
-    );
+    try {
+      await streamResearch(
+        { topic: topic.trim(), city, country },
+        (s) => setSteps((prev) => [...prev, s]),
+        (r) => {
+          setResult(r);
+          setLoading(false);
+          setTimeout(() => resultRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+        },
+        (msg) => {
+          setError(msg);
+          setLoading(false);
+        },
+        ctrl.signal,
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Research request failed";
+      setError(message);
+      setLoading(false);
+    }
   };
 
   return (

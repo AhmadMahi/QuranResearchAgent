@@ -118,6 +118,34 @@ export default function ReportDisplay({ result }: Props) {
           </div>
         </div>
       )}
+
+      {/* Web references */}
+      {result.web_results.length > 0 && (
+        <div className="space-y-2">
+          <h3 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
+            <Globe size={14} className="text-orange-400" /> IslamQA References
+          </h3>
+          <div className="glass p-3 space-y-2">
+            {result.web_results.slice(0, 5).map((r, i) => (
+              <div key={i} className="text-xs text-slate-300 leading-relaxed">
+                {r.url ? (
+                  <a
+                    href={r.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-orange-300 hover:text-orange-200 underline"
+                  >
+                    {r.title || r.url}
+                  </a>
+                ) : (
+                  <span className="text-slate-400">{r.title}</span>
+                )}
+                {r.snippet && <p className="text-slate-400 mt-1">{r.snippet}</p>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

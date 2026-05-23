@@ -49,12 +49,13 @@ async def weather_node(state: ResearchState) -> dict:
 
 
 async def web_search_node(state: ResearchState) -> dict:
-    """Runs a DuckDuckGo search for the research topic."""
-    query = f"{state['topic']} research insights 2024 2025"
+    """Runs an IslamQA-focused DuckDuckGo search for the topic."""
+    query = state["topic"]
     results = await asyncio.to_thread(web_search, query, 5)
+    found = len([r for r in results if r.get("url")])
     return {
         "web_results": results,
-        "agent_steps": [f"✓ Web Search Agent — {len(results)} result(s)"],
+        "agent_steps": [f"✓ Web Search Agent — {found} IslamQA reference(s)"],
         "current_agent": "vector_storer",
     }
 
@@ -68,7 +69,10 @@ def make_vector_store_node(vs):
             if r.get("text"):
                 docs.append(r["text"])
         for r in state.get("web_results", [])[:4]:
-            docs.append(r[:600])
+            title = r.get("title", "")
+            snippet = r.get("snippet", "")
+            url = r.get("url", "")
+            docs.append(f"{title}\n{snippet}\nSource: {url}"[:600])
 
         if docs:
             await asyncio.to_thread(vs.store_documents, docs, state["topic"])
@@ -119,8 +123,16 @@ async def formatter_node(state: ResearchState) -> dict:
         )
 
     if web:
-        web_text = "\n\n".join(web[:3])[:1200]
-        sections.append(f"### Web Research Highlights\n{web_text}")
+        lines = []
+        for r in web[:5]:
+            title = r.get("title", "Untitled")
+            snippet = (r.get("snippet") or "")[:220]
+            url = r.get("url") or ""
+            if url:
+                lines.append(f"- [{title}]({url}) — {snippet}")
+            else:
+                lines.append(f"- {title} — {snippet}")
+        sections.append("### IslamQA References (DuckDuckGo)\n" + "\n".join(lines))
 
     if ctx:
         sections.append(f"### Semantic Context\n" + "\n".join(f"- {c[:200]}" for c in ctx[:2]))
@@ -142,7 +154,9 @@ Structure the report with these markdown sections:
 4. ## Research Findings
 5. ## Key Insights & Recommendations
 6. ## Conclusion
+7. ## References
 
+In the References section, include explicit source links from IslamQA data when available.
 Be professional, insightful, and concrete. Use bullet points where appropriate."""
 
     resp = await asyncio.to_thread(get_llm().invoke, prompt)

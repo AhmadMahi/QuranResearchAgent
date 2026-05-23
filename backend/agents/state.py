@@ -12,7 +12,7 @@ class ResearchState(TypedDict):
     quran_references: List[Dict[str, Any]]
     prayer_times: Dict[str, str]
     weather_data: Dict[str, Any]
-    web_results: List[str]
+    web_results: List[Dict[str, str]]
     vector_context: List[str]
     final_report: str
 
