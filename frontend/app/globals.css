@@ -1,0 +1,211 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #080c16;
+  --surface: rgba(255, 255, 255, 0.04);
+  --border: rgba(255, 255, 255, 0.08);
+  --accent: #10b981;
+  --accent-dim: rgba(16, 185, 129, 0.15);
+  --accent-glow: rgba(16, 185, 129, 0.3);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg);
+  color: #f1f5f9;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  min-height: 100vh;
+}
+
+/* ── Background ─────────────────────────────────────────────────────────── */
+.page-bg {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(16, 185, 129, 0.12) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 40% at 80% 90%, rgba(99, 102, 241, 0.08) 0%, transparent 60%),
+    #080c16;
+  min-height: 100vh;
+}
+
+/* ── Glass card ─────────────────────────────────────────────────────────── */
+.glass {
+  background: var(--surface);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+}
+
+.glass-accent {
+  background: var(--accent-dim);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: 12px;
+}
+
+/* ── Gradient text ──────────────────────────────────────────────────────── */
+.gradient-text {
+  background: linear-gradient(135deg, #10b981 0%, #6366f1 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Shimmer skeleton ───────────────────────────────────────────────────── */
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,0.03) 25%,
+    rgba(255,255,255,0.08) 50%,
+    rgba(255,255,255,0.03) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s linear infinite;
+}
+
+/* ── Pulse ring ─────────────────────────────────────────────────────────── */
+@keyframes pulse-ring {
+  0%   { transform: scale(1);   opacity: 0.6; }
+  50%  { transform: scale(1.35); opacity: 0.1; }
+  100% { transform: scale(1);   opacity: 0.6; }
+}
+
+.pulse-ring::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  animation: pulse-ring 1.5s ease-in-out infinite;
+}
+
+/* ── Markdown report ────────────────────────────────────────────────────── */
+.report-body h2 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #10b981;
+  margin: 1.5rem 0 0.5rem;
+  border-bottom: 1px solid rgba(16, 185, 129, 0.2);
+  padding-bottom: 0.3rem;
+}
+
+.report-body h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #a7f3d0;
+  margin: 1.2rem 0 0.4rem;
+}
+
+.report-body p {
+  line-height: 1.7;
+  color: #cbd5e1;
+  margin-bottom: 0.8rem;
+}
+
+.report-body ul,
+.report-body ol {
+  margin: 0.5rem 0 0.8rem 1.4rem;
+  color: #cbd5e1;
+  line-height: 1.7;
+}
+
+.report-body li {
+  margin-bottom: 0.3rem;
+}
+
+.report-body strong {
+  color: #f1f5f9;
+}
+
+.report-body table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.8rem 0;
+  font-size: 0.875rem;
+}
+
+.report-body th,
+.report-body td {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  text-align: left;
+  color: #cbd5e1;
+}
+
+.report-body th {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  font-weight: 600;
+}
+
+.report-body tr:hover td {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* ── Input focus glow ───────────────────────────────────────────────────── */
+.input-field {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  color: #f1f5f9;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 0.95rem;
+}
+
+.input-field::placeholder {
+  color: #64748b;
+}
+
+.input-field:focus {
+  border-color: rgba(16, 185, 129, 0.5);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12);
+}
+
+/* ── Button ─────────────────────────────────────────────────────────────── */
+.btn-primary {
+  background: linear-gradient(135deg, #059669, #10b981);
+  color: #fff;
+  font-weight: 600;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.1s, box-shadow 0.2s;
+  padding: 0.75rem 1.75rem;
+  font-size: 0.95rem;
+  letter-spacing: 0.01em;
+}
+
+.btn-primary:hover:not(:disabled) {
+  opacity: 0.9;
+  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.35);
+  transform: translateY(-1px);
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Scrollbar ──────────────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
